@@ -18,6 +18,18 @@ void __attribute__((weak)) pm_beacon_offset_funcs_empty_init(void)
 {
 }
 
+/*
+ * Weak hook called by esp_event_post for non-WiFi events (e.g. MESH_EVENT).
+ * The mesh driver (esp_mesh_drv.c) provides the strong definition when
+ * CONFIG_WIFI_ESP32_MESH is enabled; otherwise this no-op is used.
+ */
+void __attribute__((weak)) esp_mesh_event_dispatch(esp_event_base_t event_base,
+						    int32_t event_id,
+						    void *event_data,
+						    size_t event_data_size)
+{
+}
+
 /* Route esp_event_post to Zephyr Wi-Fi event handler */
 esp_err_t esp_event_post(esp_event_base_t event_base, int32_t event_id,
 			 const void *event_data, size_t event_data_size,
@@ -30,5 +42,8 @@ esp_err_t esp_event_post(esp_event_base_t event_base, int32_t event_id,
 					   uint32_t ticks_to_wait);
 	esp_wifi_event_handler(event_base, event_id, (void *)event_data,
 			       event_data_size, ticks_to_wait);
+	/* Dispatch to mesh driver for MESH_EVENT and any other non-WiFi bases */
+	esp_mesh_event_dispatch(event_base, event_id, (void *)event_data,
+				event_data_size);
 	return ESP_OK;
 }

@@ -37,6 +37,7 @@ if(CONFIG_SOC_SERIES_ESP32S3)
     ../../components/esp_driver_touch_sens/hw_ver2/include
     ../../components/esp_driver_touch_sens/include
     ../../components/esp_event/include
+    ../../components/esp_event/private_include
     ../../components/esp_hal_ana_conv/include
     ../../components/esp_hal_ana_conv/${CONFIG_SOC_SERIES}/include
     ../../components/esp_hal_cam/include
@@ -499,6 +500,7 @@ if(CONFIG_SOC_SERIES_ESP32S3)
       ../../components/esp_phy/src/phy_override.c
       ../../components/esp_phy/esp32s3/phy_init_data.c
       ../port/stubs/wifi_compat_stubs.c
+      ../port/stubs/esp_event_stubs.c
       )
 
     if (CONFIG_ESP32_SW_COEXIST_ENABLE)
@@ -517,6 +519,7 @@ if(CONFIG_SOC_SERIES_ESP32S3)
       core
       pp
       phy
+      mesh
       ## esp-idf wifi libs refer gcc libs symbols, so linked in libgcc
       gcc
         -L${CMAKE_CURRENT_SOURCE_DIR}/../blobs/lib/esp32s3
@@ -738,6 +741,7 @@ if(CONFIG_SOC_SERIES_ESP32S3)
       ../../components/esp_coex/esp32s3/esp_coex_adapter.c
       ../../components/esp_wifi/src/wifi_init.c
       ../../components/esp_wifi/src/lib_printf.c
+      ../../components/esp_wifi/src/mesh_event.c
       ../../components/esp_phy/esp32s3/phy_init_data.c
       ${WPA_SUPPLICANT_SRCS}
       ${ESP_SUPPLICANT_SRCS}

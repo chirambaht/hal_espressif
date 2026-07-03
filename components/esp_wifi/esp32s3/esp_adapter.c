@@ -403,9 +403,24 @@ static uint32_t queue_msg_waiting_wrapper(void *handle)
     return k_msgq_num_used_get(&queue->msgq);
 }
 
-static uint32_t event_group_wait_bits_wrapper(void *event, uint32_t bits_to_wait_for, int clear_on_exit, int wait_for_all_bits, uint32_t block_time_tick)
+static uint32_t event_group_wait_bits_wrapper(void *event, uint32_t bits_to_wait_for,
+					      int clear_on_exit, int wait_for_all_bits,
+					      uint32_t block_time_tick)
 {
-	return 0;
+	struct k_event *ev = (struct k_event *)event;
+	k_timeout_t timeout = (block_time_tick == 0xffffffffUL)
+		? K_FOREVER : K_TICKS(block_time_tick);
+	uint32_t result;
+
+	if (wait_for_all_bits) {
+		result = k_event_wait_all(ev, bits_to_wait_for, false, timeout);
+	} else {
+		result = k_event_wait(ev, bits_to_wait_for, false, timeout);
+	}
+	if (clear_on_exit && result) {
+		k_event_clear(ev, result);
+	}
+	return result;
 }
 
 static int32_t task_create_pinned_to_core_wrapper(void *task_func, const char *name, uint32_t stack_depth, void *param, uint32_t prio, void *task_handle, uint32_t core_id)
@@ -528,22 +543,33 @@ static void *IRAM_ATTR zalloc_internal_wrapper(size_t size)
 
 void *xEventGroupCreate(void)
 {
-	LOG_ERR("EventGroup not supported!");
-	return NULL;
+	struct k_event *ev = k_malloc(sizeof(struct k_event));
+
+	if (ev == NULL) {
+		LOG_ERR("xEventGroupCreate: out of memory");
+		return NULL;
+	}
+	k_event_init(ev);
+	return ev;
 }
 
 void vEventGroupDelete(void *grp)
 {
+	k_free(grp);
 }
 
 uint32_t xEventGroupSetBits(void *ptr, uint32_t data)
 {
-	return 0;
+	struct k_event *ev = (struct k_event *)ptr;
+
+	return k_event_post(ev, data);
 }
 
 uint32_t xEventGroupClearBits(void *ptr, uint32_t data)
 {
-	return 0;
+	struct k_event *ev = (struct k_event *)ptr;
+
+	return k_event_clear(ev, data);
 }
 
 void task_delay(uint32_t ticks)
